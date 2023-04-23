@@ -1,2 +1,4 @@
 discord~=2.2.2
 python-dotenv~=1.0.0
+pymongo~=4.3.3
+certifi~=2022.12.7

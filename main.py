@@ -1,17 +1,22 @@
-"""OI Big Brothers"""
+"""OI Big Brother Bot"""
 
 import os
+
+import certifi
 from dotenv import load_dotenv
 import discord
+import pymongo
 from discord import Activity, ActivityType, Status, app_commands, Intents
 
 load_dotenv()
-TOKEN = os.getenv("token")
+token = os.getenv("token")
+connection_string = os.getenv("connection")
+mongo_client = pymongo.MongoClient(connection_string, tlsCAFile=certifi.where())
+characters_db = mongo_client["OI-Big-Brother"]["characters"]
 
 intents = Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
-# For slash commands. Can be changed later
 tree = app_commands.CommandTree(client)
 
 
@@ -21,7 +26,6 @@ async def on_ready():
     await client.change_presence(
         status=Status.online, activity=Activity(type=ActivityType.watching, name="you")
     )
-    # For slash commands. Can be changed later
     await tree.sync()
 
 
@@ -29,5 +33,11 @@ async def on_ready():
 async def ping(interaction: discord.Interaction):
     await interaction.response.send_message("Pong!")
 
+
+@tree.command(name="setup", description="Initialize a character")
+async def setup(interaction: discord.Interaction):
+    await interaction.response.send_message("Setup!")
+
 if __name__ == "__main__":
-    client.run(TOKEN)
+    print(characters_db)
+    client.run(token)
