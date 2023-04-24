@@ -61,7 +61,7 @@ STATS_OPTIONS = [
 # If change in STATS_OPTIONS, this needs to be modified manually
 starting_stats_select_embed = Embed(
     title="Choose starting stats",
-    description="You have 25 points to distribute among the following stats:\n"
+    description="You have 20 points to distribute among the following stats:\n"
                 "\n**Hunger Level**: 0"
                 "\n**Activity Level**: 0"
                 "\n**Energy Level**: 0"
@@ -74,7 +74,7 @@ starting_stats_select_embed = Embed(
 )
 
 starting_stats_select_options = [SelectOption(label=f"{i}")
-                                 for i in range(1, 26)]
+                                 for i in range(0, 21)]
 
 
 final_setup_confirmation_embed = Embed(
@@ -155,7 +155,7 @@ class StartingStatsSelectView(StartingRoomSelectView):
     def __init__(self, interaction: Interaction):
         super().__init__(interaction)
         self.current_stat = "Hunger Level"
-        self.max_points = 25
+        self.max_points = 20
         self.starting_stats = {stat: 0 for stat in STATS_OPTIONS}
         self.options = starting_stats_select_options.copy()
         self.embed = starting_stats_select_embed.copy()
@@ -186,7 +186,7 @@ class StartingStatsSelectView(StartingRoomSelectView):
                                               self.starting_room, self.starting_stats, embed)
             await interaction.response.edit_message(embed=embed, view=view)
         else:
-            self.options = [SelectOption(label=f"{i}") for i in range(1, self.max_points + 1)]
+            self.options = [SelectOption(label=f"{i}") for i in range(0, self.max_points + 1)]
             self.current_stat = STATS_OPTIONS[STATS_OPTIONS.index(self.current_stat) + 1]
             self.embed.description = f"You have {self.max_points} points to distribute among the following stats:\n" \
                                      f"\n**Hunger Level**: {self.starting_stats['Hunger Level']}" \
