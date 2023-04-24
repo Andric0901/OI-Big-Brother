@@ -1,23 +1,16 @@
 """OI Big Brother Bot"""
 
 import os
-
+from elements import *
 import certifi
 from dotenv import load_dotenv
-import discord
 import pymongo
-from discord import Activity, ActivityType, Status, app_commands, Intents
 
 load_dotenv()
 token = os.getenv("token")
 connection_string = os.getenv("connection")
 mongo_client = pymongo.MongoClient(connection_string, tlsCAFile=certifi.where())
 characters_db = mongo_client["OI-Big-Brother"]["characters"]
-
-intents = Intents.default()
-intents.message_content = True
-client = discord.Client(intents=intents)
-tree = app_commands.CommandTree(client)
 
 
 @client.event
@@ -30,13 +23,16 @@ async def on_ready():
 
 
 @tree.command(name="ping", description="Pings the bot")
-async def ping(interaction: discord.Interaction):
+async def ping(interaction: Interaction):
     await interaction.response.send_message("Pong!")
 
 
 @tree.command(name="setup", description="Initialize a character")
-async def setup(interaction: discord.Interaction):
-    await interaction.response.send_message("Setup!")
+async def setup(interaction: Interaction):
+    await interaction.response.send_message(embed=confirm_command_embed, ephemeral=True)
+    view = KeynoteConfirmView(interaction)
+    await interaction.user.send(embed=keynote_embed, view=view)
+
 
 if __name__ == "__main__":
     print(characters_db)
