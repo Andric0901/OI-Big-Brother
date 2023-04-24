@@ -224,14 +224,13 @@ class FinalSetupConfirmationView(discord.ui.View):
 
     @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green)
     async def confirm(self, interaction: Interaction, button: discord.ui.Button):
-        self.children.clear()
-        await interaction.response.edit_message(embed=self.embed, view=self)
-        await interaction.followup.send("Character Saved!", ephemeral=True)
+        await interaction.response.send_message("Character Saved!", ephemeral=True)
         await interaction.message.delete()
         await self.interaction.followup.send(embed=self.embed)
 
     @discord.ui.button(label="Start Over", style=discord.ButtonStyle.red)
     async def start_over(self, interaction: Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("Starting over...", ephemeral=True)
+        await interaction.message.delete()
+        await interaction.response.send_message(embed=self.embed)
         view = KeynoteConfirmView(interaction)
         await interaction.user.send(embed=keynote_embed, view=view)
