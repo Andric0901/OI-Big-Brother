@@ -8,6 +8,11 @@ intents.message_content = True
 client = Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
+no_permission_embed = Embed(
+    description="You do not have permission to do this.",
+    color=0xFF0000,
+)
+
 confirm_command_embed = Embed(
     description="I've sent you a DM!",
     color=0x00FF00,
@@ -81,6 +86,7 @@ final_setup_confirmation_embed = Embed(
     title="Character Details",
     color=0x00FF00,
 )
+
 
 class KeynoteConfirmView(discord.ui.View):
     def __init__(self, interaction: Interaction):
@@ -157,6 +163,8 @@ class StartingStatsSelectView(StartingRoomSelectView):
         self.current_stat = "Hunger Level"
         self.max_points = 20
         self.starting_stats = {stat: 0 for stat in STATS_OPTIONS}
+        # Future recursive calls to this class will modify these
+        # two instance variables, use copy to prevent mutation
         self.options = starting_stats_select_options.copy()
         self.embed = starting_stats_select_embed.copy()
         for child in self.children:
@@ -224,9 +232,8 @@ class FinalSetupConfirmationView(discord.ui.View):
 
     @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green)
     async def confirm(self, interaction: Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("Character Saved!", ephemeral=True)
+        await interaction.response.send_message("Character Saved!", embed=self.embed)
         await interaction.message.delete()
-        await self.interaction.followup.send(embed=self.embed)
 
     @discord.ui.button(label="Start Over", style=discord.ButtonStyle.red)
     async def start_over(self, interaction: Interaction, button: discord.ui.Button):
