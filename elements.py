@@ -8,16 +8,23 @@ intents.message_content = True
 client = Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
+# Embed to show when user attempts to use a command they don't have permission to use
 no_permission_embed = Embed(
     description="You do not have permission to do this.",
     color=0xFF0000,
 )
 
+########################################
+# Elements for /setup command
+########################################
+
+# Embed to show when user (who has permission to do so) uses the /setup command
 confirm_command_embed = Embed(
     description="I've sent you a DM!",
     color=0x00FF00,
 )
 
+# First embed of /setup inside DM channel
 keynote_embed = Embed(
     title="Before we start...",
     description="**Here are some things to keep in mind:**\n"
@@ -30,12 +37,14 @@ keynote_embed = Embed(
     color=0x00FF00,
 )
 
+# Second embed of /setup inside DM channel
 character_name_request_embed = Embed(
     title="What is the name of the character?",
     description="Choose a creative name!",
     color=0x00FF00,
 )
 
+# Third embed of /setup inside DM channel
 portrait_emoji_select_embed = Embed(
     title="Welcome, player!",
     description="Select from this list of available portraits and emojis: (Google Docs Link)\n"
@@ -43,25 +52,30 @@ portrait_emoji_select_embed = Embed(
     color=0x00FF00,
 )
 
+# Select options for View with portrait_emoji_select_embed
 # Values for each SelectOption will be set starting from 0 for indexing purposes
 portrait_emoji_select_options = [SelectOption(label=f"{i}", value=f"{i - 1}")
                                  for i in range(1, 26)]
 
+# Fourth embed of /setup inside DM channel
 starting_room_select_embed = Embed(
     title="Choose a starting room",
     description="Select from this list of available rooms: (...)\n",
     color=0x00FF00,
 )
 
+# Select options for View with starting_room_select_embed
 # Values for each SelectOption will be set starting from 0 for indexing purposes
 starting_room_select_options = [SelectOption(label=f"Room {i}", value=f"{i - 1}")
                                 for i in range(1, 16)]
 
+# List of stats that the user will be able to choose from
 STATS_OPTIONS = [
     "Hunger Level", "Activity Level", "Energy Level", "Strength",
     "Agility", "Intelligence", "Creativity"
 ]
 
+# Fifth embed of /setup inside DM channel (edited over recursive calls)
 # TODO: Could also give a short description of each stat
 # If change in STATS_OPTIONS, this needs to be modified manually
 starting_stats_select_embed = Embed(
@@ -78,14 +92,23 @@ starting_stats_select_embed = Embed(
     color=0x00FF00,
 )
 
+# Select options for View with starting_stats_select_embed
 starting_stats_select_options = [SelectOption(label=f"{i}")
                                  for i in range(0, 21)]
 
-
+# Sixth embed of /setup inside DM channel
 final_setup_confirmation_embed = Embed(
     title="Character Details",
     color=0x00FF00,
 )
+
+
+########################################
+# Views for /setup command
+# Order of views:
+# KeynoteConfirmView -> PortraitEmojiSelectView ->
+# StartingRoomSelectView -> StartingStatsSelectView -> FinalSetupConfirmationView
+########################################
 
 
 class KeynoteConfirmView(discord.ui.View):
@@ -105,7 +128,6 @@ class KeynoteConfirmView(discord.ui.View):
         msg = await client.wait_for("message", check=check)
         self.character_name = msg.content
         await interaction.message.delete()
-        # print(self.character_name)
         portrait_emoji_select_embed.title = f"Welcome, {self.character_name}!"
         view = PortraitEmojiSelectView(interaction)
         view.character_name = self.character_name
