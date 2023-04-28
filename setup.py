@@ -244,29 +244,45 @@ class FinalSetupConfirmationView(discord.ui.View):
 
     @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green)
     async def confirm(self, interaction: Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("Character Saved!", embed=self.embed)
-        await interaction.message.delete()
-        user_id = str(interaction.user.id)
-        encrypted_user_id = encrypt_id(user_id)
-        data = {
-            "character_name": self.character_name,
-            "portrait_emoji_pair": self.portrait_emoji_pair,
-            "starting_room": self.starting_room,
-            "starting_stats": self.starting_stats
-        }
-        characters_db.update_one({"_id": encrypted_user_id}, {"$set": data}, upsert=True)
-        # TODO: fix for updating db elements
-        chosen_character_names = []
-        chosen_portrait_emoji_pairs = []
-        for document in characters_db.find():
-            chosen_character_names.append(document["character_name"])
-            chosen_portrait_emoji_pairs.append(document["portrait_emoji_pair"])
-        # update_db_elements()
-        print(chosen_character_names, chosen_portrait_emoji_pairs)
+        await interaction.response.defer()
+        chosen_character_names, chosen_portrait_emoji_pairs = updated_db_elements()
+        if self.character_name in chosen_character_names:
+            print("Uh oh name oopsie")
+        elif self.portrait_emoji_pair in chosen_portrait_emoji_pairs:
+            print("Uh oh emoji oopsie")
+        else:
+            user_id = str(interaction.user.id)
+            encrypted_user_id = encrypt_id(user_id)
+            data = {
+                "character_name": self.character_name,
+                "portrait_emoji_pair": self.portrait_emoji_pair,
+                "starting_room": self.starting_room,
+                "starting_stats": self.starting_stats
+            }
+            characters_db.update_one({"_id": encrypted_user_id}, {"$set": data}, upsert=True)
+            time.sleep(5)
+            await interaction.followup.send("Character Saved!", embed=self.embed)
+            await interaction.message.delete()
+            chosen_character_names, chosen_portrait_emoji_pairs = updated_db_elements()
+            print(chosen_character_names, chosen_portrait_emoji_pairs)
 
     @discord.ui.button(label="Start Over", style=discord.ButtonStyle.red)
     async def start_over(self, interaction: Interaction, button: discord.ui.Button):
         await interaction.message.delete()
         await interaction.response.send_message(embed=self.embed)
+        user_id = str(interaction.user.id)
+        encrypted_user_id = encrypt_id(user_id)
+        characters_db.delete_one({"_id": encrypted_user_id})
         view = KeynoteConfirmView(interaction)
         await interaction.user.send(embed=keynote_embed, view=view)
+
+
+def updated_db_elements() -> tuple[list, list]:
+    """Return updated chosen_character_names and
+    chosen_portrait_emoji_pairs from the database."""
+    chosen_character_names = []
+    chosen_portrait_emoji_pairs = []
+    for document in characters_db.find():
+        chosen_character_names.append(document["character_name"])
+        chosen_portrait_emoji_pairs.append(document["portrait_emoji_pair"])
+    return chosen_character_names, chosen_portrait_emoji_pairs

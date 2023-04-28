@@ -8,6 +8,7 @@ import os
 import certifi
 import pymongo
 import discord.ui
+import time
 from discord import *
 from dotenv import load_dotenv
 from typing import Union
@@ -43,9 +44,6 @@ no_permission_embed = Embed(
     color=0xFF0000,
 )
 
-chosen_character_names = []
-chosen_portrait_emoji_pairs = []
-
 
 def encrypt_id(unencrypted_id: Union[int, str]) -> str:
     """Encrypts the discord user id using the encryption key."""
@@ -55,21 +53,3 @@ def encrypt_id(unencrypted_id: Union[int, str]) -> str:
 def decrypt_id(encrypted_id: Union[int, str]) -> str:
     """Decrypts the discord user id using the encryption key."""
     return str(int(encrypted_id) - int(encryption_key))
-
-
-# TODO: NOT FUNCTIONAL
-#       Does not update when called from another file
-#       remove if impossible to fix
-def update_db_elements() -> None:
-    """Update chosen_character_names and chosen_portrait_emoji_pairs from the database."""
-    global chosen_character_names, chosen_portrait_emoji_pairs
-    chosen_character_names = []
-    chosen_portrait_emoji_pairs = []
-    for document in characters_db.find():
-        chosen_character_names.append(document["character_name"])
-        chosen_portrait_emoji_pairs.append(document["portrait_emoji_pair"])
-
-
-update_db_elements()
-print(chosen_character_names)
-print(chosen_portrait_emoji_pairs)
