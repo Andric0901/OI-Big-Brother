@@ -314,8 +314,8 @@ class FinalSetupConfirmationView(discord.ui.View):
             characters_db.update_one({"_id": encrypted_user_id}, {"$set": data}, upsert=True)
             await interaction.followup.send("Character Saved!", embed=self.embed)
             await interaction.message.delete()
-            # chosen_character_names, chosen_portrait_emoji_pairs = updated_db_elements()
-            # print(chosen_character_names, chosen_portrait_emoji_pairs)
+            chosen_character_names, chosen_portrait_emoji_pairs = updated_db_elements()
+            print(chosen_character_names, chosen_portrait_emoji_pairs)
 
     @discord.ui.button(label="Start Over", style=discord.ButtonStyle.red)
     async def start_over(self, interaction: Interaction, button: discord.ui.Button):
