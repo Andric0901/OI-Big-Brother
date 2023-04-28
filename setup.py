@@ -13,6 +13,35 @@ confirm_command_embed = Embed(
     color=0x00FF00,
 )
 
+# Embed to show when user attempts to create another character
+already_has_character_embed = Embed(
+    title="You already have made a character!",
+    description="If you want to change your character, click the 'Start Over' button below.\n"
+                "Note: This will delete your current character.",
+    color=0xFF0000,
+)
+
+
+class InitialDuplicateStartOverView(discord.ui.View):
+    def __init__(self, interaction: Interaction):
+        super().__init__()
+        self.interaction = interaction
+
+    @discord.ui.button(label="Start Over", style=ButtonStyle.blurple)
+    async def start_over(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.message.delete()
+        user_id = self.interaction.user.id
+        encrypted_user_id = encrypt_id(user_id)
+        characters_db.delete_one({"_id": encrypted_user_id})
+        assert characters_db.find_one({"_id": encrypted_user_id}) is None
+        view = KeynoteConfirmView(self.interaction)
+        await self.interaction.user.send(embed=keynote_embed, view=view)
+
+    @discord.ui.button(label="Cancel", style=ButtonStyle.red)
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.message.delete()
+
+
 # First embed of /setup inside DM channel
 keynote_embed = Embed(
     title="Before we start...",
@@ -22,7 +51,8 @@ keynote_embed = Embed(
                 "\n✅ Each character will get its own portrait and representative emoji."
                 "\n✅ You can change your character's details at any time, until the game starts."
                 "\n✅ At the end, you will have a chance to review the details, and start over if needed."
-                "\n✅ Your character will be anonymized, even to the jurors.",
+                "\n✅ Your character will be anonymized, even to the jurors and developers."
+                "\n✅ We recommend completing the creation within 10 minutes to avoid duplicates.",
     color=0x00FF00,
 )
 
@@ -92,6 +122,21 @@ final_setup_confirmation_embed = Embed(
     color=0x00FF00,
 )
 
+# Embed to show when the character name is already taken
+character_name_taken_embed = Embed(
+    title="Character name already taken!",
+    description="Someone (out of all odds) chose the same name before you...\n"
+                "Please start over by clicking the button below.",
+    color=0xFF0000,
+)
+
+# Embed to show when the portrait/emoji is already taken
+portrait_emoji_taken_embed = Embed(
+    title="Portrait/Emoji already taken!",
+    description="Someone (out of all odds) chose the same portrait/emoji pair before you...\n"
+                "Please start over by clicking the button below.",
+    color=0xFF0000,
+)
 
 ########################################
 # Views for /setup command
@@ -247,9 +292,15 @@ class FinalSetupConfirmationView(discord.ui.View):
         await interaction.response.defer()
         chosen_character_names, chosen_portrait_emoji_pairs = updated_db_elements()
         if self.character_name in chosen_character_names:
-            print("Uh oh name oopsie")
+            await interaction.message.delete()
+            await interaction.followup.send(embed=self.embed)
+            view = ConfirmDuplicateStartOverView(interaction)
+            await interaction.followup.send(embed=character_name_taken_embed, view=view)
         elif self.portrait_emoji_pair in chosen_portrait_emoji_pairs:
-            print("Uh oh emoji oopsie")
+            await interaction.message.delete()
+            await interaction.followup.send(embed=self.embed)
+            view = ConfirmDuplicateStartOverView(interaction)
+            await interaction.followup.send(embed=portrait_emoji_taken_embed, view=view)
         else:
             user_id = str(interaction.user.id)
             encrypted_user_id = encrypt_id(user_id)
@@ -260,7 +311,6 @@ class FinalSetupConfirmationView(discord.ui.View):
                 "starting_stats": self.starting_stats
             }
             characters_db.update_one({"_id": encrypted_user_id}, {"$set": data}, upsert=True)
-            time.sleep(5)
             await interaction.followup.send("Character Saved!", embed=self.embed)
             await interaction.message.delete()
             chosen_character_names, chosen_portrait_emoji_pairs = updated_db_elements()
@@ -270,6 +320,21 @@ class FinalSetupConfirmationView(discord.ui.View):
     async def start_over(self, interaction: Interaction, button: discord.ui.Button):
         await interaction.message.delete()
         await interaction.response.send_message(embed=self.embed)
+        user_id = str(interaction.user.id)
+        encrypted_user_id = encrypt_id(user_id)
+        characters_db.delete_one({"_id": encrypted_user_id})
+        view = KeynoteConfirmView(interaction)
+        await interaction.user.send(embed=keynote_embed, view=view)
+
+
+class ConfirmDuplicateStartOverView(discord.ui.View):
+    def __init__(self, interaction: Interaction):
+        super().__init__()
+        self.interaction = interaction
+
+    @discord.ui.button(label="Start Over", style=discord.ButtonStyle.red)
+    async def start_over(self, interaction: Interaction, button: discord.ui.Button):
+        await interaction.message.delete()
         user_id = str(interaction.user.id)
         encrypted_user_id = encrypt_id(user_id)
         characters_db.delete_one({"_id": encrypted_user_id})

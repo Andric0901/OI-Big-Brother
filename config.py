@@ -8,7 +8,6 @@ import os
 import certifi
 import pymongo
 import discord.ui
-import time
 from discord import *
 from dotenv import load_dotenv
 from typing import Union

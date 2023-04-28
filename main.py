@@ -24,8 +24,15 @@ async def ping(interaction: Interaction):
 async def setup(interaction: Interaction):
     if interaction.user.id in COLLABORATORS or not BLOCK_COMMANDS:
         await interaction.response.send_message(embed=confirm_command_embed, ephemeral=True)
-        view = KeynoteConfirmView(interaction)
-        await interaction.user.send(embed=keynote_embed, view=view)
+        user_id = interaction.user.id
+        encrypted_user_id = encrypt_id(user_id)
+        character = characters_db.find_one({"_id": encrypted_user_id})
+        if character is None:
+            view = KeynoteConfirmView(interaction)
+            await interaction.user.send(embed=keynote_embed, view=view)
+        else:
+            view = InitialDuplicateStartOverView(interaction)
+            await interaction.user.send(embed=already_has_character_embed, view=view)
     else:
         await interaction.response.send_message(embed=no_permission_embed, ephemeral=True)
 
