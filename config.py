@@ -57,6 +57,9 @@ def decrypt_id(encrypted_id: Union[int, str]) -> str:
     return str(int(encrypted_id) - int(encryption_key))
 
 
+# TODO: NOT FUNCTIONAL
+#       Does not update when called from another file
+#       remove if impossible to fix
 def update_db_elements() -> None:
     """Update chosen_character_names and chosen_portrait_emoji_pairs from the database."""
     global chosen_character_names, chosen_portrait_emoji_pairs

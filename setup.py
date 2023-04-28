@@ -255,6 +255,14 @@ class FinalSetupConfirmationView(discord.ui.View):
             "starting_stats": self.starting_stats
         }
         characters_db.update_one({"_id": encrypted_user_id}, {"$set": data}, upsert=True)
+        # TODO: fix for updating db elements
+        chosen_character_names = []
+        chosen_portrait_emoji_pairs = []
+        for document in characters_db.find():
+            chosen_character_names.append(document["character_name"])
+            chosen_portrait_emoji_pairs.append(document["portrait_emoji_pair"])
+        # update_db_elements()
+        print(chosen_character_names, chosen_portrait_emoji_pairs)
 
     @discord.ui.button(label="Start Over", style=discord.ButtonStyle.red)
     async def start_over(self, interaction: Interaction, button: discord.ui.Button):
