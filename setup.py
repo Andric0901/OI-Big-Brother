@@ -67,7 +67,7 @@ character_name_request_embed = Embed(
 portrait_emoji_select_embed = Embed(
     title="Welcome, player!",
     description="Select from this list of available portraits and emojis: (Google Docs Link)\n"
-                "\n**Already chosen by other players**: (...)",
+                "\n**Already chosen by other players:** (...)",
     color=0x00FF00,
 )
 
@@ -164,8 +164,14 @@ class KeynoteConfirmView(discord.ui.View):
         self.character_name = msg.content
         await interaction.message.delete()
         portrait_emoji_select_embed.title = f"Welcome, {self.character_name}!"
+        chosen_portrait_emoji_pairs = updated_db_elements()[1]
+        updated_string = "" + ", ".join(chosen_portrait_emoji_pairs) + ""
+        portrait_emoji_select_embed.description = portrait_emoji_select_embed.description.\
+            replace("(...)", updated_string)
         view = PortraitEmojiSelectView(interaction)
         view.character_name = self.character_name
+        view.children[0].options = [element for element in portrait_emoji_select_options
+                                    if element.label not in chosen_portrait_emoji_pairs]
         await interaction.followup.send(embed=portrait_emoji_select_embed, view=view)
 
 
@@ -174,15 +180,10 @@ class PortraitEmojiSelectView(KeynoteConfirmView):
         super().__init__(interaction)
         # This indicator is a STRING
         self.portrait_emoji_pair = None
-        self.options = portrait_emoji_select_options
-        self.update_options()
+        self.options = portrait_emoji_select_options.copy()
         for child in self.children:
             if isinstance(child, discord.ui.Button):
                 self.remove_item(child)
-
-    def update_options(self):
-        # TODO: Implement later with MongoDB (Make sure to mutate the original list)
-        pass
 
     @discord.ui.select(placeholder="Select a pair...",
                        options=portrait_emoji_select_options)
@@ -313,8 +314,8 @@ class FinalSetupConfirmationView(discord.ui.View):
             characters_db.update_one({"_id": encrypted_user_id}, {"$set": data}, upsert=True)
             await interaction.followup.send("Character Saved!", embed=self.embed)
             await interaction.message.delete()
-            chosen_character_names, chosen_portrait_emoji_pairs = updated_db_elements()
-            print(chosen_character_names, chosen_portrait_emoji_pairs)
+            # chosen_character_names, chosen_portrait_emoji_pairs = updated_db_elements()
+            # print(chosen_character_names, chosen_portrait_emoji_pairs)
 
     @discord.ui.button(label="Start Over", style=discord.ButtonStyle.red)
     async def start_over(self, interaction: Interaction, button: discord.ui.Button):
