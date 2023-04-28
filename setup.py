@@ -42,9 +42,9 @@ portrait_emoji_select_embed = Embed(
 )
 
 # Select options for View with portrait_emoji_select_embed
-# Values for each SelectOption will be set starting from 0 for indexing purposes
-portrait_emoji_select_options = [SelectOption(label=f"{i}", value=f"{i - 1}")
-                                 for i in range(1, 26)]
+# To avoid confusion, value will be set equal to label
+# TODO: remember to use i - 1 for indexing purposes
+portrait_emoji_select_options = [SelectOption(label=f"{i}") for i in range(1, 26)]
 
 # Fourth embed of /setup inside DM channel
 starting_room_select_embed = Embed(
@@ -54,8 +54,9 @@ starting_room_select_embed = Embed(
 )
 
 # Select options for View with starting_room_select_embed
-# Values for each SelectOption will be set starting from 0 for indexing purposes
-starting_room_select_options = [SelectOption(label=f"Room {i}", value=f"{i - 1}")
+# To avoid confusion, value will be set equal to label (without "Room ")
+# TODO: remember to use i - 1 for indexing purposes
+starting_room_select_options = [SelectOption(label=f"Room {i}", value=f"{i}")
                                 for i in range(1, 16)]
 
 # List of stats that the user will be able to choose from
@@ -194,9 +195,9 @@ class StartingStatsSelectView(StartingRoomSelectView):
                 self.starting_stats[STATS_OPTIONS[-1]] = self.max_points
             embed = final_setup_confirmation_embed.copy()
             embed.add_field(name="Character Name", value=self.character_name, inline=True)
-            embed.add_field(name="Portrait Emoji Pair", value=f"{str(int(self.portrait_emoji_pair) + 1)}",
+            embed.add_field(name="Portrait Emoji Pair", value=f"{str(int(self.portrait_emoji_pair))}",
                                  inline=True)
-            embed.add_field(name="Starting Room", value=f"Room {str((int(self.starting_room) + 1))}", inline=True)
+            embed.add_field(name="Starting Room", value=f"Room {str((int(self.starting_room)))}", inline=True)
             embed.add_field(name="Starting Stats",
                                  value="\n".join(
                                      [f"**{stat}**: {value}" for stat, value in self.starting_stats.items()]),
