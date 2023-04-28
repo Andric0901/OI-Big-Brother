@@ -1,28 +1,6 @@
-"""OI Big Brother Bot"""
+"""Main program for the bot."""
 
-import os
-from elements import *
-import certifi
-from dotenv import load_dotenv
-import pymongo
-
-load_dotenv()
-token = os.getenv("token")
-connection_string = os.getenv("connection")
-mongo_client = pymongo.MongoClient(connection_string, tlsCAFile=certifi.where())
-characters_db = mongo_client["OI-Big-Brother"]["characters"]
-
-COLLABORATORS = [
-    214607100582559745,
-    277621798357696513,
-    660721501791715329,
-    176461616546709504,
-    690534844710649856,
-    497886145858764801,
-    233678479458172930
-]
-
-BLOCK_COMMANDS = True
+from setup import *
 
 
 @client.event

@@ -1,18 +1,7 @@
-"""Elements for the bot, mainly discord.ui elements and embeds."""
+"""Elements for the /setup command, including embeds and views."""
 
-from discord import *
-import discord.ui
+from config import *
 
-intents = Intents.default()
-intents.message_content = True
-client = Client(intents=intents)
-tree = app_commands.CommandTree(client)
-
-# Embed to show when user attempts to use a command they don't have permission to use
-no_permission_embed = Embed(
-    description="You do not have permission to do this.",
-    color=0xFF0000,
-)
 
 ########################################
 # Elements for /setup command
