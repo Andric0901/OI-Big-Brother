@@ -23,12 +23,19 @@ already_has_character_embed = Embed(
 
 
 class InitialDuplicateStartOverView(discord.ui.View):
+    """A View to show when user attempts to create another character."""
     def __init__(self, interaction: Interaction):
         super().__init__()
         self.interaction = interaction
 
     @discord.ui.button(label="Start Over", style=ButtonStyle.blurple)
     async def start_over(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """A button to start the character creation process again.
+
+        Args:
+            interaction (discord.Interaction): The interaction that triggered this View.
+            button (discord.ui.Button): The button that triggered this function.
+        """
         await interaction.message.delete()
         user_id = self.interaction.user.id
         encrypted_user_id = encrypt_id(user_id)
@@ -39,6 +46,7 @@ class InitialDuplicateStartOverView(discord.ui.View):
 
     @discord.ui.button(label="Cancel", style=ButtonStyle.red)
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """A button to cancel the character creation process."""
         await interaction.message.delete()
 
 
@@ -147,6 +155,7 @@ portrait_emoji_taken_embed = Embed(
 
 
 class KeynoteConfirmView(discord.ui.View):
+    """A View to confirm that the user has read the keynote."""
     def __init__(self, interaction: Interaction):
         super().__init__()
         self.interaction = interaction
@@ -154,10 +163,12 @@ class KeynoteConfirmView(discord.ui.View):
 
     @discord.ui.button(label="I understand", style=ButtonStyle.green)
     async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """A button to confirm that the user has read the keynote."""
         self.remove_item(button)
         await interaction.response.edit_message(embed=character_name_request_embed, view=None)
 
-        def check(m):
+        def check(m) -> bool:
+            """Check that the message is sent by the user in DMs."""
             return m.author == interaction.user and isinstance(m.channel, DMChannel)
 
         msg = await client.wait_for("message", check=check)
@@ -176,6 +187,7 @@ class KeynoteConfirmView(discord.ui.View):
 
 
 class PortraitEmojiSelectView(KeynoteConfirmView):
+    """A View to select a portrait/emoji pair."""
     def __init__(self, interaction: Interaction):
         super().__init__(interaction)
         # This indicator is a STRING
@@ -188,6 +200,12 @@ class PortraitEmojiSelectView(KeynoteConfirmView):
     @discord.ui.select(placeholder="Select a pair...",
                        options=portrait_emoji_select_options)
     async def select(self, interaction: Interaction, select: discord.ui.Select):
+        """A select menu to select a portrait/emoji pair.
+
+        Args:
+            interaction (Interaction): The interaction that triggered this View.
+            select (discord.ui.Select): The select menu that triggered this function.
+        """
         self.portrait_emoji_pair = select.values[0]
         view = StartingRoomSelectView(interaction)
         view.character_name = self.character_name
@@ -197,6 +215,7 @@ class PortraitEmojiSelectView(KeynoteConfirmView):
 
 
 class StartingRoomSelectView(PortraitEmojiSelectView):
+    """A View to select a starting room."""
     def __init__(self, interaction: Interaction):
         super().__init__(interaction)
         self.starting_room = None
@@ -206,6 +225,12 @@ class StartingRoomSelectView(PortraitEmojiSelectView):
     @discord.ui.select(placeholder="Select a starting room...",
                        options=starting_room_select_options)
     async def select(self, interaction: Interaction, select: discord.ui.Select):
+        """A select menu to select a starting room.
+
+        Args:
+            interaction (Interaction): The interaction that triggered this View.
+            select (discord.ui.Select): The select menu that triggered this function.
+        """
         self.starting_room = select.values[0]
         view = StartingStatsSelectView(interaction)
         view.character_name = self.character_name
@@ -216,6 +241,7 @@ class StartingRoomSelectView(PortraitEmojiSelectView):
 
 
 class StartingStatsSelectView(StartingRoomSelectView):
+    """A View to select starting stats."""
     def __init__(self, interaction: Interaction):
         super().__init__(interaction)
         self.current_stat = "Hunger Level"
@@ -233,6 +259,12 @@ class StartingStatsSelectView(StartingRoomSelectView):
                        options=starting_stats_select_options,
                        custom_id="starting_stats_select")
     async def select(self, interaction: Interaction, select: discord.ui.Select):
+        """A select menu to select starting stats.
+
+        Args:
+            interaction (Interaction): The interaction that triggered this View.
+            select (discord.ui.Select): The select menu that triggered this function.
+        """
         point_given = int(select.values[0])
         self.starting_stats[self.current_stat] = int(select.values[0])
         self.max_points -= point_given
@@ -278,6 +310,7 @@ class StartingStatsSelectView(StartingRoomSelectView):
 
 
 class FinalSetupConfirmationView(discord.ui.View):
+    """A View to confirm final step of the setup."""
     def __init__(self, interaction: Interaction, character_name: str, portrait_emoji_pair: str,
                  starting_room: str, starting_stats: dict, embed: Embed):
         super().__init__()
@@ -290,6 +323,12 @@ class FinalSetupConfirmationView(discord.ui.View):
 
     @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green)
     async def confirm(self, interaction: Interaction, button: discord.ui.Button):
+        """A button to confirm final step of the setup.
+
+        Args:
+            interaction (Interaction): The interaction that triggered this View.
+            button (discord.ui.Button): The button that triggered this function.
+        """
         await interaction.response.defer()
         chosen_character_names, chosen_portrait_emoji_pairs = updated_db_elements()
         if self.character_name in chosen_character_names:
@@ -319,6 +358,12 @@ class FinalSetupConfirmationView(discord.ui.View):
 
     @discord.ui.button(label="Start Over", style=discord.ButtonStyle.red)
     async def start_over(self, interaction: Interaction, button: discord.ui.Button):
+        """A button to start over the setup.
+
+        Args:
+            interaction (Interaction): The interaction that triggered this View.
+            button (discord.ui.Button): The button that triggered this function.
+        """
         await interaction.message.delete()
         await interaction.response.send_message(embed=self.embed)
         user_id = str(interaction.user.id)
@@ -329,12 +374,20 @@ class FinalSetupConfirmationView(discord.ui.View):
 
 
 class ConfirmDuplicateStartOverView(discord.ui.View):
+    """A View to confirm starting over the setup after
+    a duplicate character name or portrait emoji pair."""
     def __init__(self, interaction: Interaction):
         super().__init__()
         self.interaction = interaction
 
     @discord.ui.button(label="Start Over", style=discord.ButtonStyle.red)
     async def start_over(self, interaction: Interaction, button: discord.ui.Button):
+        """A button to start over the setup.
+
+        Args:
+            interaction (Interaction): The interaction that triggered this View.
+            button (discord.ui.Button): The button that triggered this function.
+        """
         await interaction.message.delete()
         user_id = str(interaction.user.id)
         encrypted_user_id = encrypt_id(user_id)
@@ -345,7 +398,12 @@ class ConfirmDuplicateStartOverView(discord.ui.View):
 
 def updated_db_elements() -> tuple[list, list]:
     """Return updated chosen_character_names and
-    chosen_portrait_emoji_pairs from the database."""
+    chosen_portrait_emoji_pairs from the database.
+
+    Returns:
+        tuple[list, list]: Updated chosen_character_names and
+        chosen_portrait_emoji_pairs from the database.
+    """
     chosen_character_names = []
     chosen_portrait_emoji_pairs = []
     for document in characters_db.find():

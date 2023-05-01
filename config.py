@@ -1,6 +1,8 @@
 """Configuration file for discord api and other token related stuffs.
 
 Also includes general embeds and functions used across multiple commands.
+
+This is a parent file to all command files, which is then inherited to main.py.
 """
 
 import os
@@ -12,12 +14,15 @@ from discord import *
 from dotenv import load_dotenv
 from typing import Union
 
+# Set up client and intents for the discord bot
 intents = Intents.default()
 intents.message_content = True
 client = Client(intents=intents)
 
+# Set up command tree for slash commands
 tree = app_commands.CommandTree(client)
 
+# Set up environment variables
 load_dotenv()
 token = os.getenv("token")
 connection_string = os.getenv("connection")
@@ -46,10 +51,24 @@ no_permission_embed = Embed(
 
 
 def encrypt_id(unencrypted_id: Union[int, str]) -> str:
-    """Encrypts the discord user id using the encryption key."""
+    """Encrypts the discord user id using the encryption key.
+
+    Args:
+        unencrypted_id (Union[int, str]): The discord user id to encrypt.
+
+    Returns:
+        str: The encrypted discord user id.
+    """
     return str(int(unencrypted_id) + int(encryption_key))
 
 
 def decrypt_id(encrypted_id: Union[int, str]) -> str:
-    """Decrypts the discord user id using the encryption key."""
+    """Decrypts the discord user id using the encryption key.
+
+    Args:
+        encrypted_id (Union[int, str]): The discord user id to decrypt.
+
+    Returns:
+        str: The decrypted discord user id.
+    """
     return str(int(encrypted_id) - int(encryption_key))

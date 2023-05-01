@@ -1,4 +1,7 @@
-"""Main program for the bot."""
+"""Main program for the bot.
+
+This file inherits from all command files and runs the bot.
+"""
 
 from setup import *
 
