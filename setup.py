@@ -2,7 +2,6 @@
 
 from config import *
 
-
 ########################################
 # Elements for /setup command
 ########################################
@@ -24,6 +23,7 @@ already_has_character_embed = Embed(
 
 class InitialDuplicateStartOverView(discord.ui.View):
     """A View to show when user attempts to create another character."""
+
     def __init__(self, interaction: Interaction):
         super().__init__()
         self.interaction = interaction
@@ -71,58 +71,48 @@ character_name_request_embed = Embed(
     color=0x00FF00,
 )
 
-# Third embed of /setup inside DM channel
-portrait_emoji_select_embed = Embed(
-    title="Welcome, player!",
-    description="Select from this list of available portraits and emojis: (Google Docs Link)\n"
-                "\n**Already chosen by other players:** (...)",
-    color=0x00FF00,
-)
-
-# Select options for View with portrait_emoji_select_embed
-# To avoid confusion, value will be set equal to label
-# TODO: remember to use i - 1 for indexing purposes
-portrait_emoji_select_options = [SelectOption(label=f"{i}") for i in range(1, 26)]
-
 # Fourth embed of /setup inside DM channel
 starting_room_select_embed = Embed(
-    title="Choose a starting room",
-    description="Select from this list of available rooms: (...)\n",
+    title="Welcome, player!",
+    description="Select your starting room from this list of available rooms: \n"
+                "\n- Bedroom 1"
+                "\n- Bedroom 2"
+                "\n- Lounge"
+                "\n- Kitchen"
+                "\n- Backyard",
     color=0x00FF00,
 )
 
 # Select options for View with starting_room_select_embed
-# To avoid confusion, value will be set equal to label (without "Room ")
-# TODO: remember to use i - 1 for indexing purposes
-starting_room_select_options = [SelectOption(label=f"Room {i}", value=f"{i}")
-                                for i in range(1, 16)]
+# Values after select will be set equal to label
+starting_room_select_options = [SelectOption(label="Bedroom 1"),
+                                SelectOption(label="Bedroom 2"),
+                                SelectOption(label="Lounge"),
+                                SelectOption(label="Kitchen"),
+                                SelectOption(label="Backyard")]
 
 # List of stats that the user will be able to choose from
-STATS_OPTIONS = [
-    "Hunger Level", "Activity Level", "Energy Level", "Strength",
-    "Agility", "Intelligence", "Creativity"
-]
+TRAITS_OPTIONS = ["Strength", "Dexterity", "Constitution", "Intelligence", "Charisma"]
 
 # Fifth embed of /setup inside DM channel (edited over recursive calls)
 # TODO: Could also give a short description of each stat
-# If change in STATS_OPTIONS, this needs to be modified manually
-starting_stats_select_embed = Embed(
-    title="Choose starting stats",
-    description="You have 20 points to distribute among the following stats:\n"
-                "\n**Hunger Level**: 0"
-                "\n**Activity Level**: 0"
-                "\n**Energy Level**: 0"
+# If change in TRAITS_OPTIONS, this needs to be modified manually
+starting_traits_select_embed = Embed(
+    title="Distribute points for starting traits",
+    description="You have 60 points to distribute among the following traits, with\n"
+                "**20 points maximum** for each trait:\n"
                 "\n**Strength**: 0"
-                "\n**Agility**: 0"
+                "\n**Dexterity**: 0"
+                "\n**Constitution**: 0"
                 "\n**Intelligence**: 0"
-                "\n**Creativity**: 0"
-                "\n\nSelect number of points for your **Hunger Level**:",
+                "\n**Charisma**: 0"
+                "\n\nSelect number of points for your **Strength**:",
     color=0x00FF00,
 )
 
-# Select options for View with starting_stats_select_embed
-starting_stats_select_options = [SelectOption(label=f"{i}")
-                                 for i in range(0, 21)]
+# Select options for View with starting_traits_select_embed
+starting_traits_select_options = [SelectOption(label=f"{i}")
+                                  for i in range(0, 21)]
 
 # Sixth embed of /setup inside DM channel
 final_setup_confirmation_embed = Embed(
@@ -138,24 +128,10 @@ character_name_taken_embed = Embed(
     color=0xFF0000,
 )
 
-# Embed to show when the portrait/emoji is already taken
-portrait_emoji_taken_embed = Embed(
-    title="Portrait/Emoji already taken!",
-    description="Someone (out of all odds) chose the same portrait/emoji pair before you...\n"
-                "Please start over by clicking the button below.",
-    color=0xFF0000,
-)
-
-########################################
-# Views for /setup command
-# Order of views:
-# KeynoteConfirmView -> PortraitEmojiSelectView ->
-# StartingRoomSelectView -> StartingStatsSelectView -> FinalSetupConfirmationView
-########################################
-
 
 class KeynoteConfirmView(discord.ui.View):
     """A View to confirm that the user has read the keynote."""
+
     def __init__(self, interaction: Interaction):
         super().__init__()
         self.interaction = interaction
@@ -174,48 +150,19 @@ class KeynoteConfirmView(discord.ui.View):
         msg = await client.wait_for("message", check=check)
         self.character_name = msg.content
         await interaction.message.delete()
-        portrait_emoji_select_embed.title = f"Welcome, {self.character_name}!"
-        chosen_portrait_emoji_pairs = updated_db_elements()[1]
-        updated_string = "" + ", ".join(chosen_portrait_emoji_pairs) + ""
-        portrait_emoji_select_embed.description = portrait_emoji_select_embed.description.\
-            replace("(...)", updated_string)
-        view = PortraitEmojiSelectView(interaction)
-        view.character_name = self.character_name
-        view.children[0].options = [element for element in portrait_emoji_select_options
-                                    if element.label not in chosen_portrait_emoji_pairs]
-        await interaction.followup.send(embed=portrait_emoji_select_embed, view=view)
 
-
-class PortraitEmojiSelectView(KeynoteConfirmView):
-    """A View to select a portrait/emoji pair."""
-    def __init__(self, interaction: Interaction):
-        super().__init__(interaction)
-        # This indicator is a STRING
-        self.portrait_emoji_pair = None
-        self.options = portrait_emoji_select_options.copy()
-        for child in self.children:
-            if isinstance(child, discord.ui.Button):
-                self.remove_item(child)
-
-    @discord.ui.select(placeholder="Select a pair...",
-                       options=portrait_emoji_select_options)
-    async def select(self, interaction: Interaction, select: discord.ui.Select):
-        """A select menu to select a portrait/emoji pair.
-
-        Args:
-            interaction (Interaction): The interaction that triggered this View.
-            select (discord.ui.Select): The select menu that triggered this function.
-        """
-        self.portrait_emoji_pair = select.values[0]
+        starting_room_select_embed.title = f"Welcome, {self.character_name}!"
         view = StartingRoomSelectView(interaction)
         view.character_name = self.character_name
-        view.portrait_emoji_pair = self.portrait_emoji_pair
-        await interaction.response.edit_message(embed=starting_room_select_embed,
-                                                view=view)
+        for child in view.children:
+            if child.custom_id != "starting_room_select":
+                view.remove_item(child)
+        await interaction.followup.send(embed=starting_room_select_embed, view=view)
 
 
-class StartingRoomSelectView(PortraitEmojiSelectView):
+class StartingRoomSelectView(KeynoteConfirmView):
     """A View to select a starting room."""
+
     def __init__(self, interaction: Interaction):
         super().__init__(interaction)
         self.starting_room = None
@@ -223,7 +170,8 @@ class StartingRoomSelectView(PortraitEmojiSelectView):
         self.children.clear()
 
     @discord.ui.select(placeholder="Select a starting room...",
-                       options=starting_room_select_options)
+                       options=starting_room_select_options,
+                       custom_id="starting_room_select")
     async def select(self, interaction: Interaction, select: discord.ui.Select):
         """A select menu to select a starting room.
 
@@ -232,93 +180,96 @@ class StartingRoomSelectView(PortraitEmojiSelectView):
             select (discord.ui.Select): The select menu that triggered this function.
         """
         self.starting_room = select.values[0]
-        view = StartingStatsSelectView(interaction)
+        view = StartingTraitsSelectView(interaction)
         view.character_name = self.character_name
-        view.portrait_emoji_pair = self.portrait_emoji_pair
         view.starting_room = self.starting_room
-        await interaction.response.edit_message(embed=starting_stats_select_embed,
+        await interaction.response.edit_message(embed=starting_traits_select_embed,
                                                 view=view)
 
 
-class StartingStatsSelectView(StartingRoomSelectView):
-    """A View to select starting stats."""
+class StartingTraitsSelectView(StartingRoomSelectView):
+    """A View to distribute points for starting traits."""
+
     def __init__(self, interaction: Interaction):
         super().__init__(interaction)
-        self.current_stat = "Hunger Level"
+        self.current_trait = 0
         self.max_points = 20
-        self.starting_stats = {stat: 0 for stat in STATS_OPTIONS}
-        # Future recursive calls to this class will modify these
-        # two instance variables, use copy to prevent mutation
-        self.options = starting_stats_select_options.copy()
-        self.embed = starting_stats_select_embed.copy()
+        self.min_points = 0
+        self.points_so_far = 0
+        self.options = starting_traits_select_options.copy()
+        self.embed = starting_traits_select_embed.copy()
+        self.starting_traits = {trait: 0 for trait in TRAITS_OPTIONS}
         for child in self.children:
-            if child.custom_id != "starting_stats_select":
+            if child.custom_id != "starting_traits_select":
                 self.remove_item(child)
 
-    @discord.ui.select(placeholder="Points for Hunger Level...",
-                       options=starting_stats_select_options,
-                       custom_id="starting_stats_select")
+    @discord.ui.select(placeholder="Points for Strength...",
+                       options=starting_traits_select_options,
+                       custom_id="starting_traits_select")
     async def select(self, interaction: Interaction, select: discord.ui.Select):
-        """A select menu to select starting stats.
-
-        Args:
-            interaction (Interaction): The interaction that triggered this View.
-            select (discord.ui.Select): The select menu that triggered this function.
-        """
-        point_given = int(select.values[0])
-        self.starting_stats[self.current_stat] = int(select.values[0])
-        self.max_points -= point_given
-        if self.current_stat == STATS_OPTIONS[-2] or self.max_points == 0:
-            if self.current_stat == STATS_OPTIONS[-2]:
-                self.starting_stats[STATS_OPTIONS[-1]] = self.max_points
+        points_given = int(select.values[0])
+        self.points_so_far += points_given
+        self.starting_traits[TRAITS_OPTIONS[self.current_trait]] = points_given
+        self.current_trait += 1
+        self.min_points = new_min_points(current_trait=self.current_trait,
+                                         points_so_far=self.points_so_far)
+        self.max_points = new_max_points(current_trait=self.current_trait,
+                                         points_so_far=self.points_so_far)
+        if self.current_trait == 4 or self.min_points == 20 or self.max_points == 0:
+            if self.current_trait == 4:
+                assert 0 <= 60 - self.points_so_far <= 20
+                self.starting_traits[TRAITS_OPTIONS[self.current_trait]] = 60 - self.points_so_far
+            elif self.min_points == 20:
+                for i in range(self.current_trait, 5):
+                    self.starting_traits[TRAITS_OPTIONS[i]] = 20
+            elif self.max_points == 0:
+                for i in range(self.current_trait, 5):
+                    self.starting_traits[TRAITS_OPTIONS[i]] = 0
             embed = final_setup_confirmation_embed.copy()
             embed.add_field(name="Character Name", value=self.character_name, inline=True)
-            embed.add_field(name="Portrait Emoji Pair", value=f"{str(int(self.portrait_emoji_pair))}",
-                                 inline=True)
-            embed.add_field(name="Starting Room", value=f"Room {str((int(self.starting_room)))}", inline=True)
-            embed.add_field(name="Starting Stats",
-                                 value="\n".join(
-                                     [f"**{stat}**: {value}" for stat, value in self.starting_stats.items()]),
-                                 inline=False)
-            view = FinalSetupConfirmationView(interaction, self.character_name, self.portrait_emoji_pair,
-                                              self.starting_room, self.starting_stats, embed)
+            embed.add_field(name="Starting Room", value=self.starting_room, inline=True)
+            embed.add_field(name="Starting Traits", value="\n".join([f"{trait}: {points}" for trait, points
+                                                                     in self.starting_traits.items()]), inline=False)
+            view = FinalSetupConfirmationView(interaction, self.character_name, self.starting_room,
+                                              self.starting_traits, embed)
             await interaction.response.edit_message(embed=embed, view=view)
         else:
-            self.options = [SelectOption(label=f"{i}") for i in range(0, self.max_points + 1)]
-            self.current_stat = STATS_OPTIONS[STATS_OPTIONS.index(self.current_stat) + 1]
-            self.embed.description = f"You have {self.max_points} points to distribute among the following stats:\n" \
-                                     f"\n**Hunger Level**: {self.starting_stats['Hunger Level']}" \
-                                     f"\n**Activity Level**: {self.starting_stats['Activity Level']}" \
-                                     f"\n**Energy Level**: {self.starting_stats['Energy Level']}" \
-                                     f"\n**Strength**: {self.starting_stats['Strength']}" \
-                                     f"\n**Agility**: {self.starting_stats['Agility']}" \
-                                     f"\n**Intelligence**: {self.starting_stats['Intelligence']}" \
-                                     f"\n**Creativity**: {self.starting_stats['Creativity']}" \
-                                     f"\n\nSelect number of points for your **{self.current_stat}**:"
-            new_view = StartingStatsSelectView(interaction)
-            new_view.starting_stats = self.starting_stats
+            self.options = [SelectOption(label=f"{i}") for i in range(self.min_points, self.max_points + 1)]
+            self.embed.description = f"You have **{60 - self.points_so_far} points left** to distribute, with\n" \
+                                     "**20 points maximum** for each trait:\n" \
+                                     f"\n**Strength**: {self.starting_traits['Strength']}" \
+                                     f"\n**Dexterity**: {self.starting_traits['Dexterity']}" \
+                                     f"\n**Constitution**: {self.starting_traits['Constitution']}" \
+                                     f"\n**Intelligence**: {self.starting_traits['Intelligence']}" \
+                                     f"\n**Charisma**: {self.starting_traits['Charisma']}" \
+                                     f"\n\nSelect number of points for your **{TRAITS_OPTIONS[self.current_trait]}**:"
+            new_view = StartingTraitsSelectView(interaction)
+            new_view.character_name = self.character_name
+            new_view.starting_room = self.starting_room
+            new_view.starting_traits = self.starting_traits
+            new_view.current_trait = self.current_trait
             new_view.max_points = self.max_points
-            new_view.current_stat = self.current_stat
+            new_view.min_points = self.min_points
+            new_view.points_so_far = self.points_so_far
             new_view.options = self.options
             new_view.embed = self.embed
-            new_view.character_name = self.character_name
-            new_view.portrait_emoji_pair = self.portrait_emoji_pair
-            new_view.starting_room = self.starting_room
-            new_view.children[0].placeholder = f"Points for {self.current_stat}..."
+            new_view.children[0].placeholder = f"Points for {TRAITS_OPTIONS[self.current_trait]}..."
             new_view.children[0].options = self.options
             await interaction.response.edit_message(embed=self.embed, view=new_view)
 
 
 class FinalSetupConfirmationView(discord.ui.View):
     """A View to confirm final step of the setup."""
-    def __init__(self, interaction: Interaction, character_name: str, portrait_emoji_pair: str,
-                 starting_room: str, starting_stats: dict, embed: Embed):
+
+    def __init__(self, interaction: Interaction, character_name: str,
+                 starting_room: str, starting_traits: dict, embed: Embed):
         super().__init__()
         self.interaction = interaction
         self.character_name = character_name
-        self.portrait_emoji_pair = portrait_emoji_pair
         self.starting_room = starting_room
-        self.starting_stats = starting_stats
+        self.starting_traits = starting_traits
+        # portrait_emoji_pair is an integer, starting 0
+        self.portrait_emoji_pair = None
         self.embed = embed
 
     @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green)
@@ -330,17 +281,13 @@ class FinalSetupConfirmationView(discord.ui.View):
             button (discord.ui.Button): The button that triggered this function.
         """
         await interaction.response.defer()
-        chosen_character_names, chosen_portrait_emoji_pairs = updated_db_elements()
+        chosen_character_names = updated_db_elements()[0]
+        self.portrait_emoji_pair = assign_portrait_emoji_pair()
         if self.character_name in chosen_character_names:
             await interaction.message.delete()
             await interaction.followup.send(embed=self.embed)
             view = ConfirmDuplicateStartOverView(interaction)
             await interaction.followup.send(embed=character_name_taken_embed, view=view)
-        elif self.portrait_emoji_pair in chosen_portrait_emoji_pairs:
-            await interaction.message.delete()
-            await interaction.followup.send(embed=self.embed)
-            view = ConfirmDuplicateStartOverView(interaction)
-            await interaction.followup.send(embed=portrait_emoji_taken_embed, view=view)
         else:
             user_id = str(interaction.user.id)
             encrypted_user_id = encrypt_id(user_id)
@@ -348,13 +295,19 @@ class FinalSetupConfirmationView(discord.ui.View):
                 "character_name": self.character_name,
                 "portrait_emoji_pair": self.portrait_emoji_pair,
                 "starting_room": self.starting_room,
-                "starting_stats": self.starting_stats
+                "status": "in house",
+                "traits": self.starting_traits,
+                "stats": {  # TODO: max 100? 200?
+                    "Hunger": 100,
+                    "Energy": 100,
+                    "Activity": 100,
+                    "Socialization": 100
+                },
+                # TODO: implement relationship stats (standard distribution, how exactly?)
             }
             characters_db.update_one({"_id": encrypted_user_id}, {"$set": data}, upsert=True)
             await interaction.followup.send("Character Saved!", embed=self.embed)
             await interaction.message.delete()
-            chosen_character_names, chosen_portrait_emoji_pairs = updated_db_elements()
-            print(chosen_character_names, chosen_portrait_emoji_pairs)
 
     @discord.ui.button(label="Start Over", style=discord.ButtonStyle.red)
     async def start_over(self, interaction: Interaction, button: discord.ui.Button):
@@ -376,6 +329,7 @@ class FinalSetupConfirmationView(discord.ui.View):
 class ConfirmDuplicateStartOverView(discord.ui.View):
     """A View to confirm starting over the setup after
     a duplicate character name or portrait emoji pair."""
+
     def __init__(self, interaction: Interaction):
         super().__init__()
         self.interaction = interaction
@@ -410,3 +364,48 @@ def updated_db_elements() -> tuple[list, list]:
         chosen_character_names.append(document["character_name"])
         chosen_portrait_emoji_pairs.append(document["portrait_emoji_pair"])
     return chosen_character_names, chosen_portrait_emoji_pairs
+
+
+def assign_portrait_emoji_pair() -> int:
+    """Return the appropriate portrait emoji pair given the chosen pairs in the db."""
+    chosen_portrait_emoji_pairs = set(updated_db_elements()[1])
+    if len(chosen_portrait_emoji_pairs) == 0:
+        return 0
+    else:
+        max_elem = max(chosen_portrait_emoji_pairs)
+        default = {i for i in range(max_elem + 1)}
+        if default == chosen_portrait_emoji_pairs:
+            return max_elem + 1
+        else:
+            diff = list(default - chosen_portrait_emoji_pairs)
+            return min(diff)
+
+
+def new_max_points(current_trait: int, points_so_far: int) -> int:
+    """Return the new maximum points for the select menu in StartingTraitsSelectView."""
+    if current_trait <= 2:
+        return 20
+    else:
+        resulting_points = 60 - points_so_far
+        if resulting_points >= 20:
+            return 20
+        else:
+            return resulting_points
+
+
+def new_min_points(current_trait: int, points_so_far: int) -> int:
+    """Return the new minimum points for the select menu in StartingTraitsSelectView."""
+    if current_trait <= 1:
+        return 0
+    else:
+        len_list = len(TRAITS_OPTIONS)
+        assert len_list == 5
+        # reserve some points at the end of the list of traits so that
+        # if the minimum is picked for the current trait,
+        # 20 points are automatically assigned to the rest of the traits
+        reserved_points = 20 * (len_list - current_trait - 1)
+        resulting_points = 60 - points_so_far - reserved_points
+        if resulting_points <= 0:
+            return 0
+        else:
+            return resulting_points
