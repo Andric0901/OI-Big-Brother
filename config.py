@@ -6,14 +6,15 @@ This is a parent file to all command files, which is then inherited to main.py.
 """
 
 import os
+from pathlib import Path
+from typing import Union, Optional
 
+from abc import ABCMeta, abstractmethod
 import certifi
-import pymongo
 import discord.ui
+import pymongo
 from discord import *
 from dotenv import load_dotenv
-from typing import Union
-from pathlib import Path
 
 # Set up client and intents for the discord bot
 intents = Intents.default()
@@ -41,6 +42,18 @@ COLLABORATORS = [
     233678479458172930,
     918012501747183628
 ]
+
+CHANNEL_IDS = {
+    "bb-announcements": 1102570924223512619,
+    "view-stats": 1102571016531759195,
+    "jury-chat": 1102570847014752368,
+    "HoH Bedroom": 1102571134312009829,
+    "Bedroom 1": 1102571195490115594,
+    "Bedroom 2": 1102571228302164112,
+    "Lounge": 1102571294186295306,
+    "Kitchen": 1102571326251741184,
+    "Backyard": 1102571366189891614
+}
 
 BLOCK_COMMANDS = True
 
