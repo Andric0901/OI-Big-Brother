@@ -13,6 +13,7 @@ import discord.ui
 from discord import *
 from dotenv import load_dotenv
 from typing import Union
+from pathlib import Path
 
 # Set up client and intents for the discord bot
 intents = Intents.default()
@@ -72,3 +73,17 @@ def decrypt_id(encrypted_id: Union[int, str]) -> str:
         str: The decrypted discord user id.
     """
     return str(int(encrypted_id) - int(encryption_key))
+
+
+def get_thumbnail_file(portrait_number: int) -> discord.File:
+    """Return the thumbnail file used for each character.
+
+    Args:
+        portrait_number: (int) portrait number for the character.
+
+    Returns:
+        discord.File: A discord file "image.jpg" with the thumbnail.
+    """
+    thumbnail_path = Path(__file__).parent / f"assets/{portrait_number}.jpg"
+    thumbnail_file = discord.File(thumbnail_path, 'image.jpg')
+    return thumbnail_file

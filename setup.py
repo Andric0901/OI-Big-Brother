@@ -1,4 +1,5 @@
 """Elements for the /setup command, including embeds and views."""
+import discord
 
 from config import *
 
@@ -306,7 +307,11 @@ class FinalSetupConfirmationView(discord.ui.View):
                 # TODO: implement relationship stats (standard distribution, how exactly?)
             }
             characters_db.update_one({"_id": encrypted_user_id}, {"$set": data}, upsert=True)
-            await interaction.followup.send("Character Saved!", embed=self.embed)
+            # Get the thumbnail file, set it as thumbnail for the embed, and upload the
+            # file itself as well when sending followup
+            thumbnail_file = get_thumbnail_file(self.portrait_emoji_pair)
+            self.embed.set_thumbnail(url='attachment://image.jpg')
+            await interaction.followup.send("Character Saved!", embed=self.embed, files=[thumbnail_file])
             await interaction.message.delete()
 
     @discord.ui.button(label="Start Over", style=discord.ButtonStyle.red)
