@@ -295,7 +295,7 @@ class FinalSetupConfirmationView(discord.ui.View):
             data = {
                 "character_name": self.character_name,
                 "portrait_emoji_pair": self.portrait_emoji_pair,
-                "starting_room": self.starting_room,
+                "current_room": self.starting_room,
                 "status": "in house",
                 "traits": self.starting_traits,
                 "stats": {  # TODO: max 100? 200?
