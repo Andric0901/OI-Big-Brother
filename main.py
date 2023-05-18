@@ -58,7 +58,8 @@ async def setup(interaction: Interaction):
 
 @tree.command(name="viewstats", description="View all characters' stats")
 async def viewstats(interaction: Interaction):
-    if interaction.user.id in COLLABORATORS or not BLOCK_COMMANDS:
+    if (interaction.user.id in COLLABORATORS or not BLOCK_COMMANDS) and \
+            interaction.channel_id == 1102571016531759195:
         view = ViewStatsView(interaction=interaction)
         await interaction.response.send_message(embed=view.embed, file=view.thumbnail_file, view=view)
     else:
