@@ -17,6 +17,7 @@ class PaginationView(discord.ui.View, metaclass=ABCMeta):
 
     Optionally, a child class may implement select() method to add a dropdown menu to the view.
     """
+
     def __init__(self, current_page: int = 0,
                  timeout: Optional[float] = None,
                  interaction: Optional[discord.Interaction] = None) -> None:
@@ -29,7 +30,12 @@ class PaginationView(discord.ui.View, metaclass=ABCMeta):
         self.page = current_page
         self.min_page = 0
         self.max_page = len(self.characters) - 1
-        self.thumbnail_file, self.embed = None, None
+        self.thumbnail_file = get_thumbnail_file(self.current_character["portrait_emoji_pair"])
+        self.embed = create_embed(self.current_character["character_name"],
+                                  self.current_character["status"],
+                                  self.current_character["current_room"],
+                                  self.current_character["stats"],
+                                  self.current_character["traits"])
         self.update_buttons()
         self.interaction = interaction
 
@@ -43,7 +49,10 @@ class PaginationView(discord.ui.View, metaclass=ABCMeta):
         """
         self.page = 0
         await self.update_interaction(interaction)
-        await interaction.response.edit_message(view=self)
+        try:
+            await interaction.response.edit_message(view=self)
+        except discord.errors.InteractionResponded:
+            pass
 
     @discord.ui.button(label='◀️', style=ButtonStyle.blurple, custom_id='previous')
     async def previous_page(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -55,7 +64,10 @@ class PaginationView(discord.ui.View, metaclass=ABCMeta):
         """
         self.page -= 1
         await self.update_interaction(interaction)
-        await interaction.response.edit_message(view=self)
+        try:
+            await interaction.response.edit_message(view=self)
+        except discord.errors.InteractionResponded:
+            pass
 
     @discord.ui.button(label='▶️', style=ButtonStyle.blurple, custom_id='next')
     async def next_page(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -67,7 +79,10 @@ class PaginationView(discord.ui.View, metaclass=ABCMeta):
         """
         self.page += 1
         await self.update_interaction(interaction)
-        await interaction.response.edit_message(view=self)
+        try:
+            await interaction.response.edit_message(view=self)
+        except discord.errors.InteractionResponded:
+            pass
 
     @discord.ui.button(label='⏭️', style=ButtonStyle.green, custom_id='last')
     async def last(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -79,7 +94,10 @@ class PaginationView(discord.ui.View, metaclass=ABCMeta):
         """
         self.page = self.max_page
         await self.update_interaction(interaction)
-        await interaction.response.edit_message(view=self)
+        try:
+            await interaction.response.edit_message(view=self)
+        except discord.errors.InteractionResponded:
+            pass
 
     @abstractmethod
     async def update_interaction(self, interaction: discord.Interaction):
@@ -102,11 +120,11 @@ class PaginationView(discord.ui.View, metaclass=ABCMeta):
 
 class ViewStatsView(PaginationView):
     """The main class for viewing stats for each character, in a dictionary format."""
+
     def __init__(self, current_page: int = 0,
                  interaction: Optional[Interaction] = None) -> None:
         super().__init__(current_page=current_page)
         self.interaction = interaction
-        self.update_interaction(interaction)
 
     async def update_interaction(self, interaction: discord.Interaction) -> None:
         # TODO: may not need to update them all when the characters list is set in stone after testing
@@ -115,4 +133,38 @@ class ViewStatsView(PaginationView):
         self.max_page = len(self.characters) - 1
         self.update_buttons()
         self.thumbnail_file = get_thumbnail_file(self.current_character["portrait_emoji_pair"])
-        # TODO: come up with more
+        self.embed = create_embed(self.current_character["character_name"],
+                                  self.current_character["status"],
+                                  self.current_character["current_room"],
+                                  self.current_character["stats"],
+                                  self.current_character["traits"])
+        await interaction.response.edit_message(embed=self.embed,
+                                                attachments=[self.thumbnail_file],
+                                                view=self)
+
+
+def create_embed(character_name: str,
+                 status: str,
+                 current_room: str,
+                 stats: dict,
+                 traits: dict) -> Embed:
+    """Create an embed for viewing stats.
+
+    Args:
+        character_name (str): The name of the character.
+        status (str): The status of the character (in house or jury).
+        current_room (str): The current room of the character.
+        stats (dict): The stats of the character.
+        traits (dict): The traits of the character.
+    """
+    embed = Embed(title=f"**{character_name}**", color=0x00ff00)
+    embed.set_thumbnail(url="attachment://image.jpg")
+    embed.add_field(name="Status", value=status, inline=True)
+    embed.add_field(name="Current Room", value=current_room, inline=True)
+    embed.add_field(name="Stats",
+                    value="\n".join([f"{key}: {value}" for key, value in stats.items()]),
+                    inline=False)
+    embed.add_field(name="Traits",
+                    value="\n".join([f"{key}: {value}" for key, value in traits.items()]),
+                    inline=False)
+    return embed

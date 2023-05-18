@@ -56,12 +56,13 @@ async def setup(interaction: Interaction):
         await interaction.response.send_message(embed=no_permission_embed, ephemeral=True)
 
 
-# @tree.command(name="viewstats", description="View all characters' stats")
-# async def viewstats(interaction: Interaction):
-#     if interaction.user.id in COLLABORATORS or not BLOCK_COMMANDS:
-#         ...
-#     else:
-#         await interaction.response.send_message(embed=no_permission_embed, ephemeral=True)
+@tree.command(name="viewstats", description="View all characters' stats")
+async def viewstats(interaction: Interaction):
+    if interaction.user.id in COLLABORATORS or not BLOCK_COMMANDS:
+        view = ViewStatsView(interaction=interaction)
+        await interaction.response.send_message(embed=view.embed, file=view.thumbnail_file, view=view)
+    else:
+        await interaction.response.send_message(embed=no_permission_embed, ephemeral=True)
 
 
 if __name__ == "__main__":
