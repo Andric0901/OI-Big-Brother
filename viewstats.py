@@ -5,6 +5,13 @@ THIS FILE ASSUMES THAT THERE IS AT LEAST ONE CHARACTER IN THE DATABASE.
 
 from config import *
 
+character_names = [document["character_name"] for document in characters_db.find()]
+
+view_stats_select_options = [
+    discord.SelectOption(label=character_name, value=str(character_names.index(character_name)))
+    for character_name in character_names
+]
+
 
 # TODO: PaginationView could be moved to config.py if other files need this class
 class PaginationView(discord.ui.View, metaclass=ABCMeta):
@@ -125,6 +132,21 @@ class ViewStatsView(PaginationView):
                  interaction: Optional[Interaction] = None) -> None:
         super().__init__(current_page=current_page)
         self.interaction = interaction
+
+    @discord.ui.select(placeholder='Jump to...', options=view_stats_select_options.copy())
+    async def select(self, interaction: discord.Interaction, select: discord.ui.Select):
+        """Jump to a specific character.
+
+        Args:
+            interaction (discord.Interaction): The interaction that triggered this button.
+            select (discord.ui.Select): The select menu that was clicked.
+        """
+        self.page = int(select.values[0])
+        await self.update_interaction(interaction)
+        try:
+            await interaction.response.edit_message(view=self)
+        except discord.errors.InteractionResponded:
+            pass
 
     async def update_interaction(self, interaction: discord.Interaction) -> None:
         # TODO: may not need to update them all when the characters list is set in stone after testing
